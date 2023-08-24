@@ -33,13 +33,13 @@ read
 doas sh -c 'sed -e "s/CHANGEME/`hostname`/" acme-client.conf > /etc/acme-client.conf'
 doas sh -c 'sed -e "s/CHANGEME/`hostname`/" httpd.conf > /etc/httpd.conf'
 
-doas rcctl -f start httpd
-doas acme-client -v `hostname`
-doas rcctl stop httpd
+# go
+doas install -o root -g wheel -m 555 renewcerts /usr/local/bin
+doas renewcerts
 
 # reconfigure cron job
-l="~       *       *       *       *       rcctl -f start httpd && acme-client -v `hostname` && rcctl stop httpd"
+l="~       *       *       *       *       /usr/local/bin/renewcerts"
 
-doas crontab -l | sed '/.*acme-client.*/d' | doas crontab -
+doas crontab -l | sed '/.*renewcerts.*/d' | doas crontab -
 echo installing line "$l"
 (doas crontab -l; echo "$l") | doas crontab -
