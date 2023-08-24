@@ -7,5 +7,16 @@ fi
 
 rcctl -f start httpd
 acme-client -v `hostname`
+result=$?
 rcctl stop httpd
 
+inst="sh -c 'doas install -o root -g wheel -m 444 server.pem /etc/ssl && 
+	doas install -o root -g wheel -m 400 server.key /etc/ssl/private &&
+	rm -f server.pem server.key'"
+
+rcctl check relayd || exit 0
+hosts=`doas relayctl show hosts | grep .mit.edu | cut -f 3`
+for host in $hosts; do
+	scp /etc/ssl/server.pem /etc/ssl/private/server.key fpga@$host:~/
+	ssh fpga@$host "$inst"
+done
